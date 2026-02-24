@@ -1,0 +1,48 @@
+# Merklith Devnet Configuration
+
+name = "merklith-node"
+data_dir = "/data"
+
+[network]
+enabled = true
+p2p_port = 30303
+p2p_addr = "0.0.0.0"
+bootstrap_nodes = [
+    "/dns4/merklith-node-1/tcp/30303/p2p/12D3KooWExampleNode1",
+    "/dns4/merklith-node-2/tcp/30303/p2p/12D3KooWExampleNode2",
+    "/dns4/merklith-node-3/tcp/30303/p2p/12D3KooWExampleNode3"
+]
+max_peers = 50
+upnp = false
+
+[rpc]
+http_enabled = true
+http_addr = "0.0.0.0:8545"
+http_port = 8545
+ws_enabled = true
+ws_addr = "0.0.0.0:8546"
+cors = true
+max_body_size = 10
+rate_limit = 1000
+
+[consensus]
+chain_id = 17001
+block_time = 3
+validator = true
+# validator_key = ""
+min_stake = 32
+
+[storage]
+db_path = "/data/db"
+cache_size = 512
+compression = true
+
+[metrics]
+enabled = true
+addr = "0.0.0.0:9090"
+interval = 60
+
+[logging]
+level = "info"
+# log_file = ""
+format = "pretty"

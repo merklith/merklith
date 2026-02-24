@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MERKLITH Explorer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .header {
+            background: #111827;
+            border-bottom: 1px solid #1f2937;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        .logo-text { color: #00d4ff; }
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .search-box:focus { outline: none; border-color: #00d4ff; }
+        .nav { display: flex; gap: 0.5rem; }
+        .nav-item {
+            padding: 0.5rem 1rem;
+            color: #9ca3af;
+            text-decoration: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .hero {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #00d4ff;
+        }
+        .hero p { color: #9ca3af; font-size: 1rem; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #00d4ff;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+        .section {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #1f2937;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .btn:hover { background: rgba(0, 212, 255, 0.2); }
+        .btn-secondary {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: #8b5cf6;
+            color: #8b5cf6;
+        }
+        .btn-secondary:hover { background: rgba(139, 92, 246, 0.2); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            color: #9ca3af;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #1f2937;
+        }
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #1f2937;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .link {
+            color: #00d4ff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .link:hover { text-decoration: underline; }
+        .mono {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+        .status-online { color: #10b981; }
+        .status-offline { color: #ef4444; }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+        .error {
+            text-align: center;
+            padding: 3rem;
+            color: #ef4444;
+        }
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #10b981;
+        }
+        .info-row {
+            display: flex;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #1f2937;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label {
+            width: 200px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+        .info-value {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .tx-type {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .tx-type-transfer {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+        .tx-type-contract {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #1f2937;
+        }
+        .pagination button {
+            padding: 0.5rem 1rem;
+            background: #1f2937;
+            border: 1px solid #374151;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .pagination button:hover {
+            background: #374151;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination .page-info {
+            padding: 0.5rem 1rem;
+            color: #9ca3af;
+        }
+        .breadcrumb {
+            padding: 1rem 0;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+        .breadcrumb a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo" onclick="showPage('home')">
+                <div class="logo-icon">A</div>
+                <span class="logo-text">MERKLITH</span>
+            </a>
+            <input type="text" class="search-box" id="searchInput" placeholder="Search by block, tx, or address...">
+            <nav class="nav">
+                <a class="nav-item active" onclick="showPage('home')">Dashboard</a>
+                <a class="nav-item" onclick="showPage('blocks')">Blocks</a>
+                <a class="nav-item" onclick="showPage('accounts')">Accounts</a>
+                <a class="nav-item" onclick="showPage('transactions')">Transactions</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main" id="content">
+        <div class="loading">Loading...</div>
+    </main>
+
+    <script>
+        const RPC_URL = 'http://localhost:9999';
+        let refreshInterval = null;
+        let currentPage = 'home';
+        let allBlocks = [];
+        let allAccounts = [];
+        let allTransactions = [];
+
+        async function rpcCall(method, params = []) {
+            try {
+                const response = await fetch(RPC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 })
+                });
+                const data = await response.json();
+                return data.result;
+            } catch (e) {
+                console.error('RPC Error:', e);
+                return null;
+            }
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatAddress(addr) {
+            if (!addr || addr === '0x') return 'Contract Creation';
+            return addr.substring(0, 12) + '...' + addr.substring(addr.length - 8);
+        }
+
+        function formatHash(hash) {
+            return hash.substring(0, 16) + '...' + hash.substring(hash.length - 16);
+        }
+
+        function formatValue(value) {
+            if (!value) return '0 ANV';
+            const val = parseInt(value, 16) / 1e18;
+            if (val >= 1000000) return (val / 1000000).toFixed(2) + 'M ANV';
+            if (val >= 1000) return (val / 1000).toFixed(2) + 'K ANV';
+            return val.toFixed(4) + ' ANV';
+        }
+
+        function getTxType(tx) {
+            if (!tx.to || tx.to === '0x') return { label: 'Contract', class: 'tx-type-contract' };
+            if (tx.data && tx.data !== '0x') return { label: 'Call', class: 'tx-type-contract' };
+            return { label: 'Transfer', class: 'tx-type-transfer' };
+        }
+
+        function setupRefresh(callback, interval = 30000) {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                if (document.visibilityState === 'visible' && currentPage === 'home') {
+                    callback();
+                }
+            }, interval);
+        }
+
+        // ==================== DASHBOARD ====================
+        async function loadDashboard() {
+            currentPage = 'home';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading blockchain data...</div>';
+
+            try {
+                const [stats, blockNum] = await Promise.all([
+                    rpcCall('merklith_getChainStats'),
+                    rpcCall('merklith_blockNumber')
+                ]);
+
+                if (!stats) {
+                    content.innerHTML = '<div class="error">Could not connect to blockchain</div>';
+                    return;
+                }
+
+                const currentBlock = parseInt(blockNum, 16);
+                
+                // Load recent blocks
+                const blocks = [];
+                for (let i = 0; i < 10 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block) blocks.push(block);
+                }
+
+                allBlocks = blocks;
+
+                // Calculate stats
+                let totalTxs = blocks.reduce((sum, b) => sum + (b.transactions?.length || 0), 0);
+                
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+
+                let html = `
+                    <div class="success-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Connected! Block: #${formatNumber(currentBlock)} | Txs: ${totalTxs}</span>
+                            <div>
+                                <span style="color: #9ca3af; font-size: 12px; margin-right: 15px;">Updated: ${timeStr}</span>
+                                <button onclick="loadDashboard()" class="btn" style="padding: 4px 12px; font-size: 12px;">Refresh</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero">
+                        <h1>MERKLITH Blockchain</h1>
+                        <p>Proof of Contribution Network</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card" onclick="showPage('blocks')">
+                            <div class="stat-label">Block Height</div>
+                            <div class="stat-value">${formatNumber(currentBlock)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Chain ID</div>
+                            <div class="stat-value">${parseInt(stats.chainId, 16)}</div>
+                        </div>
+                        <div class="stat-card" onclick="showPage('accounts')">
+                            <div class="stat-label">Accounts</div>
+                            <div class="stat-value">${stats.accounts}</div>
+                        </div>
+                        <div class="stat-card" onclick="showPage('transactions')">
+                            <div class="stat-label">Total Txs</div>
+                            <div class="stat-value">${totalTxs}</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Latest Blocks</span>
+                            <button class="btn" onclick="showPage('blocks')">View All Blocks</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Block</th>
+                                    <th>Hash</th>
+                                    <th>Transactions</th>
+                                    <th>Miner</th>
+                                    <th>Gas Used</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${blocks.slice(0, 5).map(block => `
+                                    <tr>
+                                        <td><span class="link" onclick="showBlock('${block.number}')">#${formatNumber(parseInt(block.number, 16))}</span></td>
+                                        <td class="mono">${formatHash(block.hash)}</td>
+                                        <td><span class="badge">${block.transactions?.length || 0}</span></td>
+                                        <td class="mono">${formatAddress(block.miner || '0x0')}</td>
+                                        <td class="mono">${parseInt(block.gasUsed, 16).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== ACCOUNTS ====================
+        async function loadAccounts() {
+            currentPage = 'accounts';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading accounts...</div>';
+
+            try {
+                const accounts = await rpcCall('merklith_accounts');
+                if (!accounts) {
+                    content.innerHTML = '<div class="error">Could not load accounts</div>';
+                    return;
+                }
+
+                // Get balances for all accounts
+                const accountData = [];
+                for (const addr of accounts) {
+                    const balance = await rpcCall('merklith_getBalance', [addr, 'latest']);
+                    const nonce = await rpcCall('merklith_getNonce', [addr]);
+                    accountData.push({
+                        address: addr,
+                        balance: balance || '0x0',
+                        nonce: nonce || '0x0'
+                    });
+                }
+
+                // Sort by balance (descending)
+                accountData.sort((a, b) => parseInt(b.balance, 16) - parseInt(a.balance, 16));
+                allAccounts = accountData;
+
+                let html = `
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showPage('home')">Home</a> / Accounts
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">All Accounts (${accountData.length})</span>
+                            <button class="btn" onclick="loadAccounts()">Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Address</th>
+                                    <th>Balance</th>
+                                    <th>Nonce</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${accountData.map((acc, idx) => `
+                                    <tr>
+                                        <td>${idx + 1}</td>
+                                        <td class="mono">${acc.address}</td>
+                                        <td style="color: #10b981; font-weight: bold;">${formatValue(acc.balance)}</td>
+                                        <td>${parseInt(acc.nonce, 16)}</td>
+                                        <td>
+                                            <button class="btn" style="padding: 4px 12px; font-size: 12px;" 
+                                                    onclick="showAccount('${acc.address}')">View</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== ACCOUNT DETAIL ====================
+        async function showAccount(address) {
+            currentPage = 'account-detail';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading account details...</div>';
+
+            try {
+                const [balance, nonce, blockNum] = await Promise.all([
+                    rpcCall('merklith_getBalance', [address, 'latest']),
+                    rpcCall('merklith_getNonce', [address]),
+                    rpcCall('merklith_blockNumber')
+                ]);
+
+                const currentBlock = parseInt(blockNum, 16);
+                
+                // Get all transactions for this account
+                const accountTxs = [];
+                for (let i = 0; i < 50 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block && block.transactions) {
+                        for (const tx of block.transactions) {
+                            const from = (tx.from || '').toLowerCase();
+                            const to = (tx.to || '').toLowerCase();
+                            const addr = address.toLowerCase();
+                            
+                            if (from === addr || to === addr) {
+                                accountTxs.push({
+                                    ...tx,
+                                    blockNumber: block.number,
+                                    blockHash: block.hash
+                                });
+                            }
+                        }
+                    }
+                }
+
+                let html = `
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showPage('home')">Home</a> / 
+                        <a href="#" onclick="showPage('accounts')">Accounts</a> / 
+                        ${formatAddress(address)}
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Account Details</span>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Address</div>
+                            <div class="info-value">${address}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Balance</div>
+                            <div class="info-value" style="color: #10b981; font-size: 1.5rem; font-weight: bold;">${formatValue(balance)}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Transaction Count</div>
+                            <div class="info-value">${parseInt(nonce, 16)}</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Transaction History (${accountTxs.length})</span>
+                        </div>
+                        ${accountTxs.length === 0 ? 
+                            '<div style="text-align: center; padding: 2rem; color: #9ca3af;">No transactions found</div>' :
+                            `<table>
+                                <thead>
+                                    <tr>
+                                        <th>Tx Hash</th>
+                                        <th>Block</th>
+                                        <th>Type</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${accountTxs.map(tx => {
+                                        const type = getTxType(tx);
+                                        const isIncoming = (tx.to || '').toLowerCase() === address.toLowerCase();
+                                        return `
+                                            <tr>
+                                                <td><span class="link" onclick="showTransaction('${tx.hash}')">${formatHash(tx.hash)}</span></td>
+                                                <td><span class="link" onclick="showBlock('${tx.blockNumber}')">#${formatNumber(parseInt(tx.blockNumber, 16))}</span></td>
+                                                <td><span class="tx-type ${type.class}">${type.label}</span></td>
+                                                <td class="mono">${formatAddress(tx.from)} ${isIncoming ? '<span style="color: #10b981;">IN</span>' : ''}</td>
+                                                <td class="mono">${formatAddress(tx.to)} ${!isIncoming && tx.from ? '<span style="color: #ef4444;">OUT</span>' : ''}</td>
+                                                <td style="color: ${isIncoming ? '#10b981' : '#ef4444'}; font-weight: bold;">${formatValue(tx.value)}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>`
+                        }
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== BLOCKS ====================
+        async function loadBlocks() {
+            currentPage = 'blocks';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading blocks...</div>';
+
+            try {
+                const blockNum = await rpcCall('merklith_blockNumber');
+                const currentBlock = parseInt(blockNum, 16);
+                
+                // Load last 50 blocks
+                const blocks = [];
+                for (let i = 0; i < 50 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block) blocks.push(block);
+                }
+
+                allBlocks = blocks;
+
+                let html = `
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showPage('home')">Home</a> / Blocks
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Latest Blocks</span>
+                            <button class="btn" onclick="loadBlocks()">Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Block</th>
+                                    <th>Hash</th>
+                                    <th>Timestamp</th>
+                                    <th>Transactions</th>
+                                    <th>Miner</th>
+                                    <th>Gas Used</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${blocks.map(block => `
+                                    <tr>
+                                        <td style="font-weight: bold; color: #00d4ff;">#${formatNumber(parseInt(block.number, 16))}</td>
+                                        <td class="mono">${formatHash(block.hash)}</td>
+                                        <td>${new Date(parseInt(block.timestamp, 16) * 1000).toLocaleString()}</td>
+                                        <td><span class="badge">${block.transactions?.length || 0}</span></td>
+                                        <td class="mono">${formatAddress(block.miner || '0x0')}</td>
+                                        <td class="mono">${parseInt(block.gasUsed, 16).toLocaleString()}</td>
+                                        <td>
+                                            <button class="btn" style="padding: 4px 12px; font-size: 12px;" 
+                                                    onclick="showBlock('${block.number}')">View</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== BLOCK DETAIL ====================
+        async function showBlock(blockNumber) {
+            currentPage = 'block-detail';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading block details...</div>';
+
+            try {
+                const block = await rpcCall('merklith_getBlockByNumber', [blockNumber, true]);
+                if (!block) {
+                    content.innerHTML = '<div class="error">Block not found</div>';
+                    return;
+                }
+
+                const blockNum = parseInt(block.number, 16);
+                const prevBlock = blockNum > 0 ? '0x' + (blockNum - 1).toString(16) : null;
+                const nextBlock = '0x' + (blockNum + 1).toString(16);
+
+                let html = `
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showPage('home')">Home</a> / 
+                        <a href="#" onclick="showPage('blocks')">Blocks</a> / 
+                        Block #${formatNumber(blockNum)}
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Block #${formatNumber(blockNum)}</span>
+                            <div>
+                                ${prevBlock ? `<button class="btn btn-secondary" style="margin-right: 0.5rem;" onclick="showBlock('${prevBlock}')">← Previous</button>` : ''}
+                                <button class="btn btn-secondary" onclick="showBlock('${nextBlock}')">Next →</button>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Block Hash</div>
+                            <div class="info-value">${block.hash}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Parent Hash</div>
+                            <div class="info-value">
+                                ${prevBlock ? `<span class="link" onclick="showBlock('${prevBlock}')">${block.parentHash}</span>` : block.parentHash}
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Timestamp</div>
+                            <div class="info-value">${new Date(parseInt(block.timestamp, 16) * 1000).toLocaleString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Miner</div>
+                            <div class="info-value"><span class="link" onclick="showAccount('${block.miner || '0x0'}')">${block.miner || '0x0'}</span></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Gas Used</div>
+                            <div class="info-value">${parseInt(block.gasUsed, 16).toLocaleString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Gas Limit</div>
+                            <div class="info-value">${parseInt(block.gasLimit, 16).toLocaleString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Transactions</div>
+                            <div class="info-value">${block.transactions?.length || 0}</div>
+                        </div>
+                    </div>
+
+                    ${block.transactions?.length > 0 ? `
+                        <div class="section">
+                            <div class="section-header">
+                                <span class="section-title">Transactions (${block.transactions.length})</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tx Hash</th>
+                                        <th>Type</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Value</th>
+                                        <th>Gas Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${block.transactions.map(tx => {
+                                        const type = getTxType(tx);
+                                        return `
+                                            <tr>
+                                                <td><span class="link" onclick="showTransaction('${tx.hash}')">${formatHash(tx.hash)}</span></td>
+                                                <td><span class="tx-type ${type.class}">${type.label}</span></td>
+                                                <td class="mono"><span class="link" onclick="showAccount('${tx.from}')">${formatAddress(tx.from)}</span></td>
+                                                <td class="mono"><span class="link" onclick="showAccount('${tx.to || '0x'}')">${formatAddress(tx.to)}</span></td>
+                                                <td style="color: #10b981; font-weight: bold;">${formatValue(tx.value)}</td>
+                                                <td class="mono">${parseInt(tx.gasPrice || '0x0', 16) / 1e9} Gwei</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<div class="section"><div class="section-header"><span class="section-title">No Transactions</span></div></div>'}
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== TRANSACTIONS ====================
+        async function loadTransactions() {
+            currentPage = 'transactions';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading transactions...</div>';
+
+            try {
+                const blockNum = await rpcCall('merklith_blockNumber');
+                const currentBlock = parseInt(blockNum, 16);
+                
+                // Get all transactions from recent blocks
+                const allTxs = [];
+                for (let i = 0; i < 30 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block && block.transactions) {
+                        for (const tx of block.transactions) {
+                            allTxs.push({
+                                ...tx,
+                                blockNumber: block.number,
+                                blockHash: block.hash,
+                                timestamp: block.timestamp
+                            });
+                        }
+                    }
+                }
+
+                allTransactions = allTxs;
+
+                let html = `
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showPage('home')">Home</a> / Transactions
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Latest Transactions (${allTxs.length})</span>
+                            <button class="btn" onclick="loadTransactions()">Refresh</button>
+                        </div>
+                        ${allTxs.length === 0 ? 
+                            '<div style="text-align: center; padding: 2rem; color: #9ca3af;">No transactions found</div>' :
+                            `<table>
+                                <thead>
+                                    <tr>
+                                        <th>Tx Hash</th>
+                                        <th>Block</th>
+                                        <th>Type</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Value</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allTxs.map(tx => {
+                                        const type = getTxType(tx);
+                                        return `
+                                            <tr>
+                                                <td><span class="link" onclick="showTransaction('${tx.hash}')">${formatHash(tx.hash)}</span></td>
+                                                <td><span class="link" onclick="showBlock('${tx.blockNumber}')">#${formatNumber(parseInt(tx.blockNumber, 16))}</span></td>
+                                                <td><span class="tx-type ${type.class}">${type.label}</span></td>
+                                                <td class="mono"><span class="link" onclick="showAccount('${tx.from}')">${formatAddress(tx.from)}</span></td>
+                                                <td class="mono"><span class="link" onclick="showAccount('${tx.to || '0x'}')">${formatAddress(tx.to)}</span></td>
+                                                <td style="color: #10b981; font-weight: bold;">${formatValue(tx.value)}</td>
+                                                <td>${new Date(parseInt(tx.timestamp, 16) * 1000).toLocaleTimeString()}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>`
+                        }
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== TRANSACTION DETAIL ====================
+        async function showTransaction(txHash) {
+            currentPage = 'tx-detail';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading transaction details...</div>';
+
+            try {
+                // Find transaction in recent blocks
+                const blockNum = await rpcCall('merklith_blockNumber');
+                const currentBlock = parseInt(blockNum, 16);
+                let tx = null;
+                let block = null;
+
+                for (let i = 0; i < 50 && currentBlock - i >= 0; i++) {
+                    const b = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (b && b.transactions) {
+                        const found = b.transactions.find(t => t.hash === txHash);
+                        if (found) {
+                            tx = found;
+                            block = b;
+                            break;
+                        }
+                    }
+                }
+
+                if (!tx) {
+                    content.innerHTML = '<div class="error">Transaction not found</div>';
+                    return;
+                }
+
+                const type = getTxType(tx);
+
+                let html = `
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showPage('home')">Home</a> / 
+                        <a href="#" onclick="showPage('transactions')">Transactions</a> / 
+                        ${formatHash(txHash)}
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Transaction Details</span>
+                            <span class="tx-type ${type.class}">${type.label}</span>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Transaction Hash</div>
+                            <div class="info-value">${tx.hash}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Block</div>
+                            <div class="info-value">
+                                <span class="link" onclick="showBlock('${block.number}')">#${formatNumber(parseInt(block.number, 16))}</span>
+                                <span style="margin-left: 1rem; color: #9ca3af;">${new Date(parseInt(block.timestamp, 16) * 1000).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Status</div>
+                            <div class="info-value"><span class="badge badge-success">Success</span></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Transaction Data</span>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">From</div>
+                            <div class="info-value">
+                                <span class="link" onclick="showAccount('${tx.from}')">${tx.from}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">To</div>
+                            <div class="info-value">
+                                ${tx.to ? `<span class="link" onclick="showAccount('${tx.to}')">${tx.to}</span>` : '<span style="color: #f59e0b;">Contract Creation</span>'}
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Value</div>
+                            <div class="info-value" style="color: #10b981; font-size: 1.2rem; font-weight: bold;">${formatValue(tx.value)}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Gas Price</div>
+                            <div class="info-value">${parseInt(tx.gasPrice || '0x0', 16) / 1e9} Gwei</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Gas Limit</div>
+                            <div class="info-value">${parseInt(tx.gas || '0x0', 16).toLocaleString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Nonce</div>
+                            <div class="info-value">${parseInt(tx.nonce, 16)}</div>
+                        </div>
+                        ${tx.data && tx.data !== '0x' ? `
+                            <div class="info-row">
+                                <div class="info-label">Data</div>
+                                <div class="info-value mono" style="font-size: 0.8rem; word-break: break-all;">${tx.data}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ==================== NAVIGATION ====================
+        function showPage(page) {
+            currentPage = page;
+            
+            // Update nav active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event?.target?.classList?.add('active');
+
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+
+            switch(page) {
+                case 'home':
+                    loadDashboard();
+                    setupRefresh(loadDashboard, 30000);
+                    break;
+                case 'blocks':
+                    loadBlocks();
+                    break;
+                case 'accounts':
+                    loadAccounts();
+                    break;
+                case 'transactions':
+                    loadTransactions();
+                    break;
+            }
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (!query) return;
+
+                // Check if it's a block number
+                if (/^\d+$/.test(query)) {
+                    showBlock('0x' + parseInt(query).toString(16));
+                    return;
+                }
+
+                // Check if it's an address (0x...)
+                if (query.startsWith('0x') && query.length === 42) {
+                    showAccount(query);
+                    return;
+                }
+
+                // Check if it's a tx hash (0x...)
+                if (query.startsWith('0x') && query.length === 66) {
+                    showTransaction(query);
+                    return;
+                }
+
+                // Check if it's a block hash (0x...)
+                if (query.startsWith('0x') && query.length > 42 && query.length < 66) {
+                    // Try to find block by hash
+                    alert('Searching for block/hash: ' + query);
+                }
+            }
+        });
+
+        // Initialize
+        loadDashboard();
+        setupRefresh(loadDashboard, 30000);
+    </script>
+</body>
+</html>

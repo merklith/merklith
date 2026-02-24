@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+  build-release:
+    name: Build Release Binaries
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            name: merklith-linux-x64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: merklith-windows-x64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: merklith-macos-x64
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libclang-dev llvm-dev
+    
+    - name: Build merklith-node
+      run: cargo build --release -p merklith-node --target ${{ matrix.target }}
+    
+    - name: Build merklith-cli
+      run: cargo build --release -p merklith-cli --target ${{ matrix.target }}
+    
+    - name: Package binaries
+      run: |
+        mkdir -p dist
+        cp target/${{ matrix.target }}/release/merklith-node dist/
+        cp target/${{ matrix.target }}/release/merklith dist/ || true
+        cp target/${{ matrix.target }}/release/merklith-cli dist/ || true
+        cd dist
+        tar czf ../${{ matrix.name }}.tar.gz *
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./${{ matrix.name }}.tar.gz
+        asset_name: ${{ matrix.name }}.tar.gz
+        asset_content_type: application/gzip

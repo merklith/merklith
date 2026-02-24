@@ -1,0 +1,72 @@
+[package]
+name = "merklith-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI tool for MERKLITH blockchain"
+default-run = "merklith"
+
+[[bin]]
+name = "merklith"
+path = "src/main.rs"
+
+[[bin]]
+name = "merklith-monitor"
+path = "src/bin/monitor.rs"
+
+[[bin]]
+name = "merklith-benchmark"
+path = "src/bin/benchmark.rs"
+
+[[bin]]
+name = "merklith-faucet"
+path = "src/bin/faucet.rs"
+
+[[bin]]
+name = "merklith-keygen"
+path = "src/bin/keygen.rs"
+
+[dependencies]
+merklith-types = { workspace = true }
+merklith-crypto = { workspace = true }
+merklith-rpc = { workspace = true }
+merklith-core = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+hex = { workspace = true }
+anyhow = { workspace = true }
+dialoguer = "0.11"
+indicatif = "0.17"
+tabled = "0.15"
+colored = "2"
+reqwest = { version = "0.12", features = ["json"] }
+toml.workspace = true
+dirs = "6.0.0"
+borsh = { workspace = true }
+
+# TUI Block Explorer
+ratatui = "0.29"
+crossterm = "0.28"
+tui-widgets = "0.3"
+uh = "0.1"
+
+# HD Wallet
+pbkdf2 = { version = "0.12", features = ["parallel"] }
+sha2 = "0.10"
+hmac = "0.12"
+rand = "0.8"
+
+# Benchmarking
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22"
+
+# Shell completions
+clap_complete = "4.5"
+
+[dev-dependencies]
+tempfile = "3"

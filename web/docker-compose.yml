@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # MERKLITH Blockchain Node
+  merklith-node:
+    build:
+      context: ../
+      dockerfile: Dockerfile.node
+    container_name: merklith-node
+    ports:
+      - "8545:8545"  # JSON-RPC
+      - "8546:8546"  # WebSocket
+      - "30303:30303"  # P2P
+      - "30303:30303/udp"
+    volumes:
+      - merklith-data:/data
+    environment:
+      - MERKLITH_CHAIN_ID=1337
+      - MERKLITH_VALIDATOR=true
+      - MERKLITH_DATA_DIR=/data
+      - RUST_LOG=info
+    networks:
+      - merklith-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Web API Backend
+  merklith-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: merklith-api
+    ports:
+      - "3002:3002"
+    environment:
+      - MERKLITH_RPC_URL=http://merklith-node:8545
+      - DATABASE_URL=postgres://merklith:merklith@postgres:5432/merklith
+      - REDIS_URL=redis://redis:6379
+      - RUST_LOG=info
+    depends_on:
+      - merklith-node
+      - postgres
+      - redis
+    networks:
+      - merklith-network
+    restart: unless-stopped
+
+  # Block Explorer Frontend
+  merklith-explorer:
+    build:
+      context: ./explorer
+      dockerfile: Dockerfile
+    container_name: merklith-explorer
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3002
+      - REACT_APP_RPC_URL=http://localhost:8545
+    depends_on:
+      - merklith-api
+    networks:
+      - merklith-network
+    restart: unless-stopped
+
+  # Web Wallet Frontend
+  merklith-wallet:
+    build:
+      context: ./wallet
+      dockerfile: Dockerfile
+    container_name: merklith-wallet
+    ports:
+      - "3001:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3002
+      - REACT_APP_RPC_URL=http://localhost:8545
+    depends_on:
+      - merklith-api
+    networks:
+      - merklith-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: merklith-postgres
+    environment:
+      - POSTGRES_USER=merklith
+      - POSTGRES_PASSWORD=merklith
+      - POSTGRES_DB=merklith
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - merklith-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: merklith-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - merklith-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: merklith-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - merklith-explorer
+      - merklith-wallet
+      - merklith-api
+    networks:
+      - merklith-network
+    restart: unless-stopped
+
+volumes:
+  merklith-data:
+  postgres-data:
+  redis-data:
+
+networks:
+  merklith-network:
+    driver: bridge

@@ -1,0 +1,96 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Merklith Blockchain Metrics",
+    "tags": ["merklith", "blockchain"],
+    "timezone": "utc",
+    "schemaVersion": 27,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Current Block Number",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "merklith_current_block",
+            "legendFormat": "Block"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Peer Count",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "merklith_peer_count",
+            "legendFormat": "Peers"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Transaction Pool Size",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "merklith_tx_pool_size",
+            "legendFormat": "Pending TXs"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Total Blocks Produced",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "merklith_blocks_produced_total",
+            "legendFormat": "Blocks"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "Block Production Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(merklith_block_production_seconds_sum[5m]) / rate(merklith_block_production_seconds_count[5m])",
+            "legendFormat": "Avg Time (s)"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "RPC Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(merklith_rpc_requests_total[1m])",
+            "legendFormat": "Requests/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "Transactions Processed",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(merklith_transactions_total[5m])",
+            "legendFormat": "TX/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+      }
+    ]
+  }
+}

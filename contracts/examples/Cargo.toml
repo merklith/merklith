@@ -1,0 +1,15 @@
+[package]
+name = "merklith-contract-examples"
+version = "0.1.0"
+edition = "2021"
+authors = ["MERKLITH Team"]
+license = "MIT OR Apache-2.0"
+description = "Example smart contracts for MERKLITH blockchain"
+
+[dependencies]
+merklith-types = { path = "../../crates/merklith-types" }
+borsh = { version = "1.5", features = ["derive"] }
+
+[lib]
+name = "merklith_contract_examples"
+path = "src/lib.rs"

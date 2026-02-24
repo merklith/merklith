@@ -1,0 +1,34 @@
+[package]
+name = "merklith-benches"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Merklith blockchain benchmarks"
+
+[dependencies]
+merklith-types = { workspace = true }
+merklith-crypto = { workspace = true }
+merklith-storage = { workspace = true }
+merklith-consensus = { workspace = true }
+blake3 = { workspace = true }
+criterion = { workspace = true }
+tempfile = { workspace = true }
+
+[[bench]]
+name = "throughput"
+path = "benches/throughput.rs"
+harness = false
+
+[[bench]]
+name = "storage"
+path = "benches/storage.rs"
+harness = false
+
+[[bench]]
+name = "consensus"
+path = "benches/consensus.rs"
+harness = false

@@ -1,0 +1,22 @@
+{
+  "name": "@merklith/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for MERKLITH Blockchain",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
+  },
+  "keywords": [
+    "merklith",
+    "blockchain",
+    "sdk",
+    "typescript",
+    "web3"
+  ],
+  "author": "MERKLITH Team",
+  "license": "MIT"
+}

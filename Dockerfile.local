@@ -1,0 +1,19 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY merklith-node-bin /usr/local/bin/merklith-node
+COPY merklith-bin /usr/local/bin/merklith
+RUN chmod +x /usr/local/bin/merklith-node /usr/local/bin/merklith
+
+RUN mkdir -p /data
+
+EXPOSE 8545 8546 30303
+
+VOLUME ["/data"]
+
+CMD ["merklith-node", "--data-dir", "/data"]

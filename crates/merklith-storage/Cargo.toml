@@ -1,0 +1,32 @@
+[package]
+name = "merklith-storage"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Storage layer for MERKLITH blockchain"
+
+[dependencies]
+merklith-types = { workspace = true }
+merklith-crypto = { workspace = true }
+hex = "0.4"
+blake3 = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+borsh = { workspace = true }
+bytes = { workspace = true }
+smallvec = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+criterion = { workspace = true }
+tempfile = { workspace = true }
+
+[[bench]]
+name = "storage_bench"
+harness = false

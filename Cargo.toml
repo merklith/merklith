@@ -1,0 +1,134 @@
+[workspace]
+members = [
+    "crates/merklith-types",
+    "crates/merklith-crypto",
+    "crates/merklith-storage",
+    "crates/merklith-core",
+    "crates/merklith-vm",
+    "crates/merklith-consensus",
+    "crates/merklith-governance",
+    "crates/merklith-txpool",
+    "crates/merklith-network",
+    "crates/merklith-rpc",
+    "crates/merklith-node",
+    "crates/merklith-cli",
+    "sdk/merklith-sdk-rs",
+    "sdk/merklith-sdk-rs/merklith-sdk-derive",
+    "contracts/system-contracts",
+    "contracts/examples",
+    "benches",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["MERKLITH Contributors"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/merklith/merklith"
+homepage = "https://merklith.com"
+description = "MERKLITH — Building Trust Block by Block"
+
+[workspace.dependencies]
+# Internal crates
+merklith-types = { path = "crates/merklith-types" }
+merklith-crypto = { path = "crates/merklith-crypto" }
+merklith-storage = { path = "crates/merklith-storage" }
+merklith-core = { path = "crates/merklith-core" }
+merklith-vm = { path = "crates/merklith-vm" }
+merklith-consensus = { path = "crates/merklith-consensus" }
+merklith-governance = { path = "crates/merklith-governance" }
+merklith-txpool = { path = "crates/merklith-txpool" }
+merklith-network = { path = "crates/merklith-network" }
+merklith-rpc = { path = "crates/merklith-rpc" }
+merklith-sdk = { path = "sdk/merklith-sdk-rs" }
+merklith-sdk-derive = { path = "sdk/merklith-sdk-rs/merklith-sdk-derive" }
+system-contracts = { path = "contracts/system-contracts" }
+
+# Async runtime
+tokio = { version = "1.36", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bincode = "1.3"
+borsh = { version = "1.3", features = ["derive"] }
+
+# Cryptography
+blake3 = "1.5"
+ed25519-dalek = { version = "2.1", features = ["serde", "batch", "rand_core"] }
+blst = "0.3"
+rand = "0.8"
+rand_chacha = "0.3"
+zeroize = { version = "1.7", features = ["derive"] }
+argon2 = "0.5"
+aes-gcm = "0.10"
+bech32 = "0.11"
+
+# WASM VM
+wasmtime = "17.0"
+
+# Networking
+libp2p = { version = "0.54", features = [
+    "tcp", "quic", "noise", "yamux",
+    "kad", "gossipsub", "identify", "ping",
+    "request-response", "dns", "tokio",
+    "macros", "serde"
+] }
+
+# Storage
+rocksdb = "0.22"
+
+# Logging & Metrics
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+prometheus = "0.13"
+metrics = "0.22"
+
+# CLI & Config
+clap = { version = "4.5", features = ["derive", "env"] }
+toml = "0.8"
+
+# Web/RPC
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+jsonrpsee = { version = "0.22", features = ["server", "macros"] }
+tokio-tungstenite = "0.21"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Utils
+hex = "0.4"
+bytes = "1.5"
+uuid = { version = "1.7", features = ["v4"] }
+
+parking_lot = "0.12"
+dashmap = "5.5"
+once_cell = "1.19"
+smallvec = "1.13"
+num-bigint = "0.4"
+num-traits = "0.2"
+itertools = "0.12"
+derive_more = "0.99"
+
+# Testing
+proptest = "1.4"
+criterion = "0.5"
+tempfile = "3.10"
+test-log = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 1
+
+[profile.test]
+opt-level = 1

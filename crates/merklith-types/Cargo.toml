@@ -1,0 +1,35 @@
+[package]
+name = "merklith-types"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core types for MERKLITH blockchain"
+
+[dependencies]
+serde = { workspace = true, optional = true }
+borsh = { workspace = true, optional = true }
+hex = { workspace = true }
+bech32 = { workspace = true }
+derive_more = { workspace = true }
+thiserror = { workspace = true }
+num-bigint = { workspace = true }
+num-traits = { workspace = true }
+once_cell = { workspace = true }
+blake3 = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+serde_json = { workspace = true }
+criterion = { workspace = true }
+
+[features]
+default = ["serde", "borsh"]
+serde = ["dep:serde"]
+borsh = ["dep:borsh"]
+
+[[bench]]
+name = "types_bench"
+harness = false

@@ -1,0 +1,42 @@
+[package]
+name = "merklith-node"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Full node for MERKLITH blockchain"
+default-run = "merklith-node"
+
+[[bin]]
+name = "merklith-node"
+path = "src/main.rs"
+
+[dependencies]
+merklith-types = { workspace = true }
+merklith-crypto = { workspace = true }
+merklith-storage = { workspace = true }
+merklith-core = { workspace = true }
+merklith-vm = { workspace = true }
+merklith-consensus = { workspace = true }
+merklith-governance = { workspace = true }
+merklith-txpool = { workspace = true }
+merklith-network = { workspace = true }
+merklith-rpc = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+prometheus = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+libp2p.workspace = true
+axum.workspace = true
+tracing-appender = "0.2.4"
+hex.workspace = true
+rand.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

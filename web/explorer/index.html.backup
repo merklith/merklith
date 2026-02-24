@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MERKLITH Explorer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .header {
+            background: #111827;
+            border-bottom: 1px solid #1f2937;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        .logo-text { color: #00d4ff; }
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .search-box:focus { outline: none; border-color: #00d4ff; }
+        .nav { display: flex; gap: 0.5rem; }
+        .nav-item {
+            padding: 0.5rem 1rem;
+            color: #9ca3af;
+            text-decoration: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #00d4ff;
+        }
+        .hero p { color: #9ca3af; font-size: 1.1rem; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .stat-card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #00d4ff;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+        .section {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #1f2937;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .btn:hover { background: rgba(0, 212, 255, 0.2); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            color: #9ca3af;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #1f2937;
+        }
+        td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #1f2937;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .block-num, .tx-hash {
+            color: #00d4ff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .block-num:hover, .tx-hash:hover { text-decoration: underline; }
+        .mono {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+        .status-online { color: #10b981; }
+        .status-offline { color: #ef4444; }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+        .error {
+            text-align: center;
+            padding: 3rem;
+            color: #ef4444;
+        }
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #10b981;
+        }
+        .tx-type {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .tx-type-transfer {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+        .tx-type-contract {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+        .tx-type-staking {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+            border-top: 1px solid #1f2937;
+            margin-top: 3rem;
+        }
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; }
+            .search-box { width: 100%; max-width: none; }
+            .hero h1 { font-size: 1.75rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo" onclick="showPage('home')">
+                <div class="logo-icon">A</div>
+                <span class="logo-text">MERKLITH Explorer</span>
+            </a>
+            
+            <input type="text" class="search-box" id="searchInput" 
+                   placeholder="Search block, tx hash, or address...">
+            
+            <nav class="nav">
+                <a class="nav-item active" data-page="home" onclick="showPage('home')">Dashboard</a>
+                <a class="nav-item" data-page="blocks" onclick="showPage('blocks')">Blocks</a>
+                <a class="nav-item" data-page="transactions" onclick="showPage('transactions')">Transactions</a>
+                <a class="nav-item" data-page="nodes" onclick="showPage('nodes')">Nodes</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div id="content">
+            <div class="loading">Loading MERKLITH Explorer...</div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>MERKLITH Blockchain Explorer © 2026</p>
+        <p style="margin-top: 0.5rem; font-size: 0.875rem;">Connected via CORS Proxy: localhost:9999</p>
+    </footer>
+
+    <script>
+        const RPC_URL = 'http://localhost:9999';
+        let currentPage = 'home';
+        let refreshInterval = null;
+        
+        async function rpcCall(method, params = []) {
+            try {
+                const response = await fetch(RPC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method,
+                        params,
+                        id: 1
+                    })
+                });
+                
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                return data.result;
+            } catch (error) {
+                console.error('RPC Error:', error.message);
+                return null;
+            }
+        }
+        
+        function formatHash(hash, start = 8, end = 8) {
+            if (!hash || hash.length < start + end + 3) return hash;
+            return hash.slice(0, start) + '...' + hash.slice(-end);
+        }
+        
+        function formatAddress(addr) {
+            if (!addr || addr.length < 10) return addr;
+            return addr.slice(0, 6) + '...' + addr.slice(-4);
+        }
+        
+        function formatTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(parseInt(timestamp, 16) * 1000);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return diff + 's ago';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return date.toLocaleDateString();
+        }
+        
+        function formatNumber(num) {
+            return num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0';
+        }
+        
+        function formatValue(value) {
+            if (!value || value === '0x0') return '0 ANV';
+            const wei = parseInt(value, 16);
+            const anv = wei / 1e18;
+            return anv.toFixed(4) + ' ANV';
+        }
+        
+        function getTxType(tx) {
+            if (!tx.to || tx.to === '0x') return { label: 'Contract', class: 'tx-type-contract' };
+            if (tx.data && tx.data !== '0x') return { label: 'Call', class: 'tx-type-contract' };
+            return { label: 'Transfer', class: 'tx-type-transfer' };
+        }
+        
+        function setupRefresh(callback, interval = 30000) {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    callback();
+                }
+            }, interval);
+        }
+        
+        async function loadDashboard() {
+            try {
+                const content = document.getElementById('content');
+                content.innerHTML = '<div class="loading">Connecting to MERKLITH nodes via CORS Proxy...</div>';
+                
+                const [stats, blockNum] = await Promise.all([
+                    rpcCall('merklith_getChainStats'),
+                    rpcCall('merklith_blockNumber')
+                ]);
+                
+                if (!stats) {
+                    throw new Error('Could not connect. Make sure CORS proxy is running on port 9999');
+                }
+                
+                const currentBlock = parseInt(blockNum, 16);
+                const blocks = [];
+                
+                for (let i = 0; i < 5 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block) blocks.push(block);
+                }
+                
+                let totalTxs = blocks.reduce((sum, b) => sum + (b.transactions?.length || 0), 0);
+                
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                
+                let html = `
+                    <div class="success-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Connected! Block: #${formatNumber(currentBlock)} | Txs: ${totalTxs}</span>
+                            <div>
+                                <span style="color: #9ca3af; font-size: 12px; margin-right: 15px;">Updated: ${timeStr}</span>
+                                <button onclick="loadDashboard()" class="btn" style="padding: 4px 12px; font-size: 12px;">Refresh</button>
+                            </div>
+                        </div>
+                    </div>`
+                    
+                    <div class="hero">
+                        <h1>MERKLITH Blockchain</h1>
+                        <p>Real-time Proof of Contribution explorer</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Block Height</div>
+                            <div class="stat-value">${formatNumber(currentBlock)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Chain ID</div>
+                            <div class="stat-value">${parseInt(stats.chainId, 16)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Accounts</div>
+                            <div class="stat-value">${stats.accounts}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Network</div>
+                            <div class="stat-value status-online">Online</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Recent blocks
+                if (blocks.length > 0) {
+                    html += `
+                        <div class="section">
+                            <div class="section-header">
+                                <span class="section-title">Latest Blocks</span>
+                                <a href="#" class="btn" onclick="showPage('blocks')">View All →</a>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Block</th>
+                                        <th>Hash</th>
+                                        <th>Age</th>
+                                        <th>Txs</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    blocks.forEach(block => {
+                        html += `
+                            <tr>
+                                <td><span class="block-num" onclick="showBlockDetail(${parseInt(block.number, 16)})">#${parseInt(block.number, 16)}</span></td>
+                                <td class="mono">${formatHash(block.hash)}</td>
+                                <td class="mono">${formatTime(block.timestamp)}</td>
+                                <td><span class="badge">${block.transactions?.length || 0} txs</span></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `</tbody></table></div>`;
+                }
+                
+                // Recent transactions
+                const allTxs = [];
+                blocks.forEach(block => {
+                    if (block.transactions) {
+                        block.transactions.forEach(tx => {
+                            if (typeof tx === 'object') {
+                                allTxs.push({ ...tx, blockNumber: block.number, timestamp: block.timestamp });
+                            }
+                        });
+                    }
+                });
+                
+                if (allTxs.length > 0) {
+                    html += `
+                        <div class="section">
+                            <div class="section-header">
+                                <span class="section-title">Latest Transactions</span>
+                                <a href="#" class="btn" onclick="showPage('transactions')">View All →</a>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tx Hash</th>
+                                        <th>Type</th>
+                                        <th>From → To</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    allTxs.slice(0, 10).forEach(tx => {
+                        const txType = getTxType(tx);
+                        html += `
+                            <tr>
+                                <td><span class="tx-hash" onclick="showTransactionDetail('${tx.hash}')">${formatHash(tx.hash, 12, 8)}</span></td>
+                                <td><span class="tx-type ${txType.class}">${txType.label}</span></td>
+                                <td class="mono">${formatAddress(tx.from)} → ${formatAddress(tx.to || '0x0')}</td>
+                                <td>${formatValue(tx.value)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `</tbody></table></div>`;
+                }
+                
+                content.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <h2>Connection Error</h2>
+                        <p>${error.message}</p>
+                        <button class="btn" onclick="loadDashboard()" style="margin-top: 1rem;">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadBlocks() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading blocks...</div>';
+            
+            try {
+                const blockNum = await rpcCall('merklith_blockNumber');
+                const currentBlock = parseInt(blockNum, 16);
+                
+                const blocks = [];
+                for (let i = 0; i < 25 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block) blocks.push(block);
+                }
+                
+                let html = `
+                    <div class="hero">
+                        <h1>Blocks</h1>
+                        <p>Latest ${blocks.length} blocks</p>
+                    </div>
+                    
+                    <div class="section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Block</th>
+                                    <th>Hash</th>
+                                    <th>Age</th>
+                                    <th>Txs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                blocks.forEach(block => {
+                    html += `
+                        <tr>
+                            <td><span class="block-num" onclick="showBlockDetail(${parseInt(block.number, 16)})">#${parseInt(block.number, 16)}</span></td>
+                            <td class="mono">${formatHash(block.hash)}</td>
+                            <td class="mono">${formatTime(block.timestamp)}</td>
+                            <td><span class="badge">${block.transactions?.length || 0} txs</span></td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table></div>`;
+                content.innerHTML = html;
+                
+            } catch (error) {
+                content.innerHTML = '<div class="error">Failed to load blocks. Make sure proxy is running.</div>';
+            }
+        }
+        
+        async function loadTransactions() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading transactions...</div>';
+            
+            try {
+                const blockNum = await rpcCall('merklith_blockNumber');
+                const currentBlock = parseInt(blockNum, 16);
+                
+                const allTxs = [];
+                for (let i = 0; i < 10 && currentBlock - i >= 0; i++) {
+                    const block = await rpcCall('merklith_getBlockByNumber', [
+                        '0x' + (currentBlock - i).toString(16),
+                        true
+                    ]);
+                    if (block && block.transactions) {
+                        block.transactions.forEach(tx => {
+                            if (typeof tx === 'object') {
+                                allTxs.push({ ...tx, blockNumber: block.number, timestamp: block.timestamp });
+                            }
+                        });
+                    }
+                }
+                
+                let html = `
+                    <div class="hero">
+                        <h1>Transactions</h1>
+                        <p>Latest ${allTxs.length} transactions from recent blocks</p>
+                    </div>
+                    
+                    <div class="section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tx Hash</th>
+                                    <th>Type</th>
+                                    <th>Block</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                allTxs.forEach(tx => {
+                    const txType = getTxType(tx);
+                    html += `
+                        <tr>
+                            <td><span class="tx-hash" onclick="showTransactionDetail('${tx.hash}')">${formatHash(tx.hash, 10, 8)}</span></td>
+                            <td><span class="tx-type ${txType.class}">${txType.label}</span></td>
+                            <td><span class="block-num" onclick="showBlockDetail(${parseInt(tx.blockNumber, 16)})">#${parseInt(tx.blockNumber, 16)}</span></td>
+                            <td class="mono">${formatAddress(tx.from)}</td>
+                            <td class="mono">${formatAddress(tx.to || '0x0')}</td>
+                            <td>${formatValue(tx.value)}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table></div>`;
+                content.innerHTML = html;
+                
+            } catch (error) {
+                content.innerHTML = '<div class="error">Failed to load transactions</div>';
+            }
+        }
+        
+        async function loadNodes() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Checking nodes...</div>';
+            
+            try {
+                const block = await rpcCall('merklith_blockNumber');
+                const blockNum = parseInt(block, 16);
+                
+                let html = `
+                    <div class="hero">
+                        <h1>Network Status</h1>
+                        <p>All systems operational</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                `;
+                
+                const nodes = [
+                    { id: 1, rpc: 'localhost:8545', ws: 'localhost:8546' },
+                    { id: 2, rpc: 'localhost:8547', ws: 'localhost:8548' },
+                    { id: 3, rpc: 'localhost:8549', ws: 'localhost:8550' }
+                ];
+                
+                nodes.forEach(node => {
+                    html += `
+                        <div class="stat-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <span style="font-size: 1.25rem; font-weight: bold;">Node ${node.id}</span>
+                                <span class="status-online">Online</span>
+                            </div>
+                            <div class="mono" style="margin-bottom: 0.5rem; color: #9ca3af;">RPC: ${node.rpc}</div>
+                            <div class="mono" style="margin-bottom: 0.5rem; color: #9ca3af;">WS: ${node.ws}</div>
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #1f2937; text-align: center;">
+                                <div style="font-size: 1.75rem; font-weight: bold; color: #00d4ff; font-family: monospace;">
+                                    #${formatNumber(blockNum)}
+                                </div>
+                                <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">Current Block</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button class="btn" onclick="loadNodes()">Refresh</button>
+                    </div>
+                `;
+                
+                content.innerHTML = html;
+                
+            } catch (error) {
+                content.innerHTML = '<div class="error">Failed to check nodes</div>';
+            }
+        }
+        
+        async function showBlockDetail(blockNum) {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading block...</div>';
+            
+            try {
+                const block = await rpcCall('merklith_getBlockByNumber', [
+                    '0x' + blockNum.toString(16),
+                    true
+                ]);
+                
+                if (!block) {
+                    content.innerHTML = '<div class="error">Block not found</div>';
+                    return;
+                }
+                
+                const date = new Date(parseInt(block.timestamp, 16) * 1000);
+                
+                let html = `
+                    <div class="hero">
+                        <h1>Block #${blockNum}</h1>
+                        <p class="mono">${date.toLocaleString()}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Block Details</span>
+                            <a href="#" class="btn" onclick="showPage('blocks')">← Back</a>
+                        </div>
+                        
+                        <table>
+                            <tr><td style="color: #9ca3af; width: 150px;">Block Hash</td><td class="mono">${block.hash}</td></tr>
+                            <tr><td style="color: #9ca3af;">Parent Hash</td><td class="mono">${block.parentHash}</td></tr>
+                            <tr><td style="color: #9ca3af;">Validator</td><td class="mono">${block.miner || 'System'}</td></tr>
+                            <tr><td style="color: #9ca3af;">Transactions</td><td>${block.transactions?.length || 0}</td></tr>
+                            <tr><td style="color: #9ca3af;">Gas Used</td><td class="mono">${parseInt(block.gasUsed, 16).toLocaleString()}</td></tr>
+                        </table>
+                    </div>
+                `;
+                
+                // Show transactions in this block
+                if (block.transactions?.length > 0) {
+                    html += `
+                        <div class="section">
+                            <div class="section-header">
+                                <span class="section-title">Transactions (${block.transactions.length})</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Hash</th>
+                                        <th>Type</th>
+                                        <th>From → To</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    block.transactions.forEach(tx => {
+                        if (typeof tx === 'object') {
+                            const txType = getTxType(tx);
+                            html += `
+                                <tr>
+                                    <td><span class="tx-hash" onclick="showTransactionDetail('${tx.hash}')">${formatHash(tx.hash, 10, 8)}</span></td>
+                                    <td><span class="tx-type ${txType.class}">${txType.label}</span></td>
+                                    <td class="mono">${formatAddress(tx.from)} → ${formatAddress(tx.to || '0x0')}</td>
+                                    <td>${formatValue(tx.value)}</td>
+                                </tr>
+                            `;
+                        }
+                    });
+                    
+                    html += `</tbody></table></div>`;
+                }
+                
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = '<div class="error">Failed to load block</div>';
+            }
+        }
+        
+        async function showTransactionDetail(txHash) {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading transaction...</div>';
+            
+            try {
+                const tx = await rpcCall('merklith_getTransactionByHash', [txHash]);
+                
+                if (!tx) {
+                    content.innerHTML = '<div class="error">Transaction not found</div>';
+                    return;
+                }
+                
+                const txType = getTxType(tx);
+                const blockNum = parseInt(tx.blockNumber, 16);
+                
+                let html = `
+                    <div class="hero">
+                        <h1>Transaction</h1>
+                        <p class="mono" style="font-size: 0.9rem;">${txHash}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span class="section-title">Transaction Details</span>
+                            <a href="#" class="btn" onclick="showPage('transactions')">← Back</a>
+                        </div>
+                        
+                        <table>
+                            <tr><td style="color: #9ca3af; width: 150px;">Tx Hash</td><td class="mono">${tx.hash}</td></tr>
+                            <tr><td style="color: #9ca3af;">Type</td><td><span class="tx-type ${txType.class}">${txType.label}</span></td></tr>
+                            <tr><td style="color: #9ca3af;">Block</td><td><span class="block-num" onclick="showBlockDetail(${blockNum})">#${blockNum}</span></td></tr>
+                            <tr><td style="color: #9ca3af;">From</td><td class="mono">${tx.from}</td></tr>
+                            <tr><td style="color: #9ca3af;">To</td><td class="mono">${tx.to || 'Contract Creation'}</td></tr>
+                            <tr><td style="color: #9ca3af;">Value</td><td style="font-weight: bold; color: #00d4ff;">${formatValue(tx.value)}</td></tr>
+                            <tr><td style="color: #9ca3af;">Gas Price</td><td class="mono">${parseInt(tx.gasPrice, 16)} wei</td></tr>
+                            <tr><td style="color: #9ca3af;">Gas Limit</td><td class="mono">${parseInt(tx.gas, 16)}</td></tr>
+                            <tr><td style="color: #9ca3af;">Nonce</td><td class="mono">${parseInt(tx.nonce, 16)}</td></tr>
+                        </table>
+                    </div>
+                `;
+                
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = '<div class="error">Failed to load transaction</div>';
+            }
+        }
+        
+        function showPage(page) {
+            currentPage = page;
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === page) item.classList.add('active');
+            });
+            
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+            
+            switch(page) {
+                case 'home': 
+                    loadDashboard(); 
+                    setupRefresh(loadDashboard, 30000);
+                    break;
+                case 'blocks': 
+                    loadBlocks(); 
+                    break;
+                case 'transactions': 
+                    loadTransactions(); 
+                    break;
+                case 'nodes': 
+                    loadNodes(); 
+                    break;
+            }
+        }
+        
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (!query) return;
+                
+                const blockNum = parseInt(query);
+                if (!isNaN(blockNum)) {
+                    showBlockDetail(blockNum);
+                    return;
+                }
+                
+                if (query.startsWith('0x') && query.length === 66) {
+                    showTransactionDetail(query);
+                    return;
+                }
+                
+                alert('Search: ' + query);
+            }
+        });
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && currentPage === 'home') {
+                loadDashboard();
+            }
+        });
+        
+        console.log('MERKLITH Explorer - Using CORS Proxy:', RPC_URL);
+        loadDashboard();
+        setupRefresh(loadDashboard, 30000);
+    </script>
+</body>
+</html>

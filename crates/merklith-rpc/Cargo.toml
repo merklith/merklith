@@ -1,0 +1,33 @@
+[package]
+name = "merklith-rpc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "JSON-RPC API for MERKLITH blockchain"
+
+[dependencies]
+merklith-types = { workspace = true }
+merklith-core = { workspace = true }
+merklith-crypto = { workspace = true }
+merklith-vm = { workspace = true }
+merklith-txpool = { workspace = true }
+merklith-storage = { workspace = true }
+merklith-consensus = { workspace = true }
+merklith-governance = { workspace = true }
+jsonrpsee = { workspace = true }
+tokio = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true, features = ["cors"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+hex = { workspace = true }
+parking_lot.workspace = true
+anyhow.workspace = true
+hyper = { version = "0.14", features = ["server", "http1", "tcp"] }
+rand = "0.8"
+bytes = "1"

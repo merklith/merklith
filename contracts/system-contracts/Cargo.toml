@@ -1,0 +1,15 @@
+[package]
+name = "system-contracts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "System contracts for Merklith blockchain"
+
+[dependencies]
+merklith-types = { workspace = true }
+blake3 = { workspace = true }
+
+[dev-dependencies]

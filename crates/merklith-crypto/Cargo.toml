@@ -1,0 +1,38 @@
+[package]
+name = "merklith-crypto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Cryptographic primitives for MERKLITH blockchain"
+
+[dependencies]
+merklith-types = { workspace = true }
+blake3 = { workspace = true }
+ed25519-dalek = { workspace = true, features = ["zeroize"] }
+blst = { workspace = true }
+rand = { workspace = true }
+rand_chacha = { workspace = true }
+zeroize = { workspace = true }
+argon2 = { workspace = true }
+aes-gcm = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+thiserror = { workspace = true }
+hex = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+criterion = { workspace = true }
+tempfile = { workspace = true }
+
+[features]
+default = ["serde"]
+serde = ["dep:serde", "dep:serde_json"]
+
+[[bench]]
+name = "crypto_bench"
+harness = false
