@@ -10,6 +10,7 @@ use colored::Colorize;
 use dialoguer::{Input, Password, Confirm};
 use indicatif::ProgressBar;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use crate::config::CliConfig;
 use crate::keystore::Keystore;
@@ -138,7 +139,7 @@ pub enum TxCommands {
         /// To address
         to: String,
         /// Amount in MERK
-        amount: f64,
+        amount: String,
         /// Gas price (optional)
         #[arg(short, long)]
         gas_price: Option<u64>,
@@ -215,8 +216,8 @@ pub enum ContractCommands {
         /// Transaction data (hex)
         data: String,
         /// Value in MERK
-        #[arg(short, long, default_value = "0")]
-        value: f64,
+        #[arg(short, long, default_value = "0.0")]
+        value: String,
         /// Gas limit
         #[arg(short, long)]
         gas_limit: Option<u64>,
@@ -602,7 +603,7 @@ async fn execute_tx(cmd: TxCommands, client: &RpcClient, config: &CliConfig) -> 
             };
 
             // Convert amount to wei using string parsing for precision
-            let value = parse_amount_to_wei(amount)?;
+            let value = parse_amount_to_wei(&amount)?;
             let gas_price = gas_price.unwrap_or(1_000_000_000);
 
             println!("Sending {} to {}", format_merk(&value).bright_yellow(), format_address(&to_addr));
@@ -804,7 +805,7 @@ async fn execute_contract(cmd: ContractCommands, client: &RpcClient) -> anyhow::
 
         ContractCommands::Send { address, data, value, gas_limit } => {
             let addr = parse_address(&address)?;
-            let val = parse_amount_to_wei(value)?;
+            let val = parse_amount_to_wei(&value)?;
 
             println!("Sending {} to contract {}", 
                 format_merk(&val).bright_yellow(),
@@ -987,30 +988,50 @@ fn parse_hash(s: &str) -> anyhow::Result<merklith_types::Hash> {
 
 /// Parse amount to wei using string representation for precision.
 /// Avoids floating-point precision issues.
-fn parse_amount_to_wei(amount: f64) -> anyhow::Result<U256> {
-    // Convert to string with high precision to avoid floating-point errors
-    let amount_str = format!("{:.18}", amount);
-    
-    // Split into integer and decimal parts
-    let parts: Vec<&str> = amount_str.split('.').collect();
-    let integer_part = parts[0].parse::<u128>()?;
-    
-    let decimal_part = if parts.len() > 1 {
-        // Pad or truncate to 18 decimal places
-        let decimals = &parts[1];
-        let padded = format!("{:0<18}", decimals);
-        padded[..18].parse::<u128>()?
+fn parse_amount_to_wei(amount: &str) -> anyhow::Result<U256> {
+    let amount = amount.trim();
+    if amount.is_empty() {
+        anyhow::bail!("Amount cannot be empty");
+    }
+    if amount.starts_with('-') {
+        anyhow::bail!("Amount cannot be negative");
+    }
+
+    let mut parts = amount.split('.');
+    let integer_str = parts.next().unwrap_or("0");
+    let decimal_str = parts.next().unwrap_or("");
+    if parts.next().is_some() {
+        anyhow::bail!("Invalid amount format");
+    }
+    if !integer_str.chars().all(|c| c.is_ascii_digit()) || !decimal_str.chars().all(|c| c.is_ascii_digit()) {
+        anyhow::bail!("Amount must contain only digits and decimal point");
+    }
+    if decimal_str.len() > 18 {
+        anyhow::bail!("Too many decimal places (max 18)");
+    }
+
+    let int_part = if integer_str.is_empty() {
+        U256::ZERO
     } else {
-        0u128
+        U256::from_str(integer_str)?
     };
-    
-    // Calculate wei: integer_part * 10^18 + decimal_part
-    let wei = integer_part
-        .checked_mul(1_000_000_000_000_000_000u128)
-        .and_then(|v| v.checked_add(decimal_part))
+    let scale = U256::from(10u64)
+        .checked_pow(18)
+        .ok_or_else(|| anyhow::anyhow!("Internal overflow"))?;
+    let int_wei = int_part
+        .checked_mul(&scale)
         .ok_or_else(|| anyhow::anyhow!("Amount too large"))?;
-    
-    Ok(U256::from(wei))
+
+    let frac_wei = if decimal_str.is_empty() {
+        U256::ZERO
+    } else {
+        let padded = format!("{:0<18}", decimal_str);
+        U256::from_str(&padded)?
+    };
+
+    int_wei
+        .checked_add(&frac_wei)
+        .ok_or_else(|| anyhow::anyhow!("Amount too large"))
 }
 
 /// Execute TUI block explorer

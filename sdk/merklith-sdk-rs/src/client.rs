@@ -1,6 +1,6 @@
 //! HTTP client for interacting with Merklith RPC.
 
-use merklith_types::{Address, Hash, Transaction, U256};
+use merklith_types::{Address, Hash, SignedTransaction, Transaction, U256};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::Duration;
@@ -204,15 +204,28 @@ impl Client {
         &self,
         _tx: &Transaction,
     ) -> Result<Hash> {
-        // TODO: Implement proper transaction serialization
-        // For now, return placeholder
-        let tx_hex = "0x0".to_string();
-        
-        let hash_hex: String = self.request(
-            "eth_sendRawTransaction",
-            json!([tx_hex]),
-        ).await?;
-        
+        Err(SdkError::InvalidTransaction(
+            "Unsigned transactions are not supported; sign first and use send_signed_transaction".to_string(),
+        ))
+    }
+
+    /// Send a signed transaction.
+    pub async fn send_signed_transaction(
+        &self,
+        tx: &SignedTransaction,
+    ) -> Result<Hash> {
+        let tx_bytes = borsh::to_vec(tx)
+            .map_err(|e| SdkError::Serialization(e.to_string()))?;
+        self.send_raw_transaction(&tx_bytes).await
+    }
+
+    /// Send pre-serialized raw transaction bytes.
+    pub async fn send_raw_transaction(
+        &self,
+        tx_bytes: &[u8],
+    ) -> Result<Hash> {
+        let tx_hex = format!("0x{}", hex::encode(tx_bytes));
+        let hash_hex: String = self.request("eth_sendRawTransaction", json!([tx_hex])).await?;
         parse_hash(&hash_hex)
     }
 
@@ -301,14 +314,24 @@ fn format_hash(hash: &Hash) -> String {
 
 /// Parse hex u64.
 fn parse_hex_u64(hex: &str) -> Result<u64> {
-    let hex = hex.trim_start_matches("0x");
-    u64::from_str_radix(hex, 16)
-        .map_err(|e| SdkError::Serialization(e.to_string()))
+    if hex.starts_with("0x") || hex.starts_with("0X") {
+        let hex = hex.trim_start_matches("0x").trim_start_matches("0X");
+        if hex.is_empty() {
+            return Ok(0);
+        }
+        u64::from_str_radix(hex, 16).map_err(|e| SdkError::Serialization(e.to_string()))
+    } else {
+        hex.parse::<u64>()
+            .map_err(|e| SdkError::Serialization(e.to_string()))
+    }
 }
 
 /// Parse hex U256.
 fn parse_hex_u256(hex: &str) -> Result<U256> {
     let hex = hex.trim_start_matches("0x");
+    if hex.is_empty() {
+        return Ok(U256::ZERO);
+    }
     let bytes = hex::decode(hex)
         .map_err(|e| SdkError::Serialization(e.to_string()))?;
     
@@ -319,7 +342,7 @@ fn parse_hex_u256(hex: &str) -> Result<U256> {
 
 /// Parse hash.
 fn parse_hash(hex: &str) -> Result<Hash> {
-    let hex = hex.trim_start_matches("0x");
+    let hex = hex.trim_start_matches("0x").trim_start_matches("0X");
     let bytes = hex::decode(hex)
         .map_err(|e| SdkError::Serialization(e.to_string()))?;
     
@@ -370,30 +393,167 @@ fn filter_to_json(filter: &Filter) -> serde_json::Value {
 
 /// Parse receipt.
 fn parse_receipt(value: serde_json::Value) -> Result<TransactionReceipt> {
-    // Simplified parsing
+    let tx_hash = value
+        .get("transactionHash")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| SdkError::Serialization("receipt.transactionHash missing".to_string()))?;
+    let tx_hash = parse_hash32(tx_hash)?;
+
+    let tx_index = value
+        .get("transactionIndex")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_u64)
+        .transpose()?
+        .unwrap_or(0);
+
+    let block_hash = value
+        .get("blockHash")
+        .and_then(|v| v.as_str())
+        .map(parse_hash32)
+        .transpose()?
+        .unwrap_or([0u8; 32]);
+
+    let block_number = value
+        .get("blockNumber")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_u64)
+        .transpose()?
+        .unwrap_or(0);
+
+    let from = value
+        .get("from")
+        .and_then(|v| v.as_str())
+        .map(parse_address)
+        .transpose()?
+        .unwrap_or(Address::ZERO);
+
+    let to = value
+        .get("to")
+        .and_then(|v| v.as_str())
+        .map(parse_address)
+        .transpose()?;
+
+    let gas_used = value
+        .get("gasUsed")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_u64)
+        .transpose()?
+        .unwrap_or(0);
+
+    let status = value
+        .get("status")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_u64)
+        .transpose()?
+        .unwrap_or(1) as u8;
+
+    let logs = value
+        .get("logs")
+        .and_then(|v| v.as_array())
+        .map(|arr| arr.iter().cloned().map(parse_log).collect())
+        .transpose()?
+        .unwrap_or_default();
+
     Ok(TransactionReceipt {
-        transaction_hash: [0u8; 32],
-        transaction_index: 0,
-        block_hash: [0u8; 32],
-        block_number: 0,
-        from: Address::ZERO,
-        to: None,
-        gas_used: 0,
-        status: 1,
-        logs: vec![],
+        transaction_hash: tx_hash,
+        transaction_index: tx_index,
+        block_hash,
+        block_number,
+        from,
+        to,
+        gas_used,
+        status,
+        logs,
     })
 }
 
 /// Parse log.
 fn parse_log(value: serde_json::Value) -> Result<Log> {
+    let address = value
+        .get("address")
+        .and_then(|v| v.as_str())
+        .map(parse_address)
+        .transpose()?
+        .unwrap_or(Address::ZERO);
+
+    let topics = value
+        .get("topics")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|topic| topic.as_str())
+                .map(parse_hash32)
+                .collect::<Result<Vec<[u8; 32]>>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
+
+    let data = value
+        .get("data")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_data)
+        .transpose()?
+        .unwrap_or_default();
+
+    let block_number = value
+        .get("blockNumber")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_u64)
+        .transpose()?
+        .unwrap_or(0);
+
+    let transaction_hash = value
+        .get("transactionHash")
+        .and_then(|v| v.as_str())
+        .map(parse_hash32)
+        .transpose()?
+        .unwrap_or([0u8; 32]);
+
+    let log_index = value
+        .get("logIndex")
+        .and_then(|v| v.as_str())
+        .map(parse_hex_u64)
+        .transpose()?
+        .unwrap_or(0);
+
     Ok(Log {
-        address: Address::ZERO,
-        topics: vec![],
-        data: vec![],
-        block_number: 0,
-        transaction_hash: [0u8; 32],
-        log_index: 0,
+        address,
+        topics,
+        data,
+        block_number,
+        transaction_hash,
+        log_index,
     })
+}
+
+fn parse_hash32(hex: &str) -> Result<[u8; 32]> {
+    let hex = hex.trim_start_matches("0x").trim_start_matches("0X");
+    let bytes = hex::decode(hex).map_err(|e| SdkError::Serialization(e.to_string()))?;
+    if bytes.len() != 32 {
+        return Err(SdkError::Serialization("Invalid 32-byte hex length".to_string()));
+    }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&bytes);
+    Ok(out)
+}
+
+fn parse_address(hex: &str) -> Result<Address> {
+    let hex = hex.trim_start_matches("0x").trim_start_matches("0X");
+    let bytes = hex::decode(hex).map_err(|e| SdkError::Serialization(e.to_string()))?;
+    if bytes.len() != 20 {
+        return Err(SdkError::Serialization("Invalid address length".to_string()));
+    }
+    let mut out = [0u8; 20];
+    out.copy_from_slice(&bytes);
+    Ok(Address::from_bytes(out))
+}
+
+fn parse_hex_data(hex: &str) -> Result<Vec<u8>> {
+    let hex = hex.trim_start_matches("0x").trim_start_matches("0X");
+    if hex.is_empty() {
+        return Ok(Vec::new());
+    }
+    hex::decode(hex).map_err(|e| SdkError::Serialization(e.to_string()))
 }
 
 #[cfg(test)]

@@ -1,7 +1,8 @@
 export { MerklithSDK } from './sdk';
-export { Wallet } from './wallet';
-export { Transaction } from './transaction';
-export { Block } from './block';
+export { PrivateKeyWallet } from './wallet';
 export { Contract } from './contract';
-export { Utils } from './utils';
+export * as Utils from './utils';
 export * from './types';
+export type { Wallet } from './wallet';
+export type { Transaction } from './transaction';
+export type { Block } from './block';

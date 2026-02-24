@@ -1,7 +1,6 @@
 //! Contract interaction helpers.
 
 use merklith_types::{Address, Transaction, U256};
-use std::marker::PhantomData;
 
 use crate::client::Client;
 use crate::errors::{Result, SdkError};
@@ -52,7 +51,7 @@ impl Contract {
             options.gas_limit.unwrap_or(100_000),
             U256::from(1_000_000_000u64),
             U256::from(1_000_000_000u64),
-        );
+        ).with_data(data);
 
         self.client.call(&tx, Some(options.block)).await
     }
@@ -71,7 +70,7 @@ impl Contract {
             options.gas_limit.unwrap_or(100_000),
             options.gas_price.unwrap_or(U256::from(1_000_000_000u64)),
             U256::from(1_000_000_000u64),
-        );
+        ).with_data(data);
 
         self.client.send_transaction(&tx).await
     }
@@ -135,26 +134,20 @@ impl ContractBuilder {
             options.gas_limit.unwrap_or(1_000_000),
             options.gas_price.unwrap_or(U256::from(1_000_000_000u64)),
             U256::from(1_000_000_000u64),
-        );
+        ).with_data(data);
 
         // Send transaction
         let hash = client.send_transaction(&tx).await?;
 
         // Wait for receipt to get contract address
-        let receipt = client.wait_for_transaction(
+        let _receipt = client.wait_for_transaction(
             &hash,
             std::time::Duration::from_secs(60),
         ).await?;
 
-        // Get contract address from receipt
-        // For now, return a placeholder
-        let contract_address = Address::ZERO;
-
-        Ok(Contract {
-            client: client.clone(),
-            address: contract_address,
-            abi: self.abi,
-        })
+        Err(SdkError::Contract(
+            "Contract deployment receipt parsing is not implemented in SDK yet".to_string(),
+        ))
     }
 }
 

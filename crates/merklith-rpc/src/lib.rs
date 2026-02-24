@@ -239,14 +239,23 @@ fn handle_method(req: &JsonRpcRequest, state: Arc<State>, chain_id: u64) -> Json
         },
         
         "merklith_sendRawTransaction" => {
-            // TODO: Real transaction parsing and execution
-            let tx_hash = format!("0x{}", hex::encode(&rand::random::<[u8; 32]>()));
-            tracing::info!("Transaction received: {}", tx_hash);
-            JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                result: Some(Value::String(tx_hash)),
-                error: None,
-                id: req.id.clone(),
+            let raw_tx = req.params.first().and_then(|v| v.as_str()).unwrap_or("");
+            match process_raw_transaction(raw_tx, &state, chain_id) {
+                Ok(hash) => JsonRpcResponse {
+                    jsonrpc: "2.0".to_string(),
+                    result: Some(Value::String(format!("0x{}", hex::encode(hash.as_bytes())))),
+                    error: None,
+                    id: req.id.clone(),
+                },
+                Err(e) => JsonRpcResponse {
+                    jsonrpc: "2.0".to_string(),
+                    result: None,
+                    error: Some(JsonRpcError {
+                        code: -32602,
+                        message: e,
+                    }),
+                    id: req.id.clone(),
+                },
             }
         },
         
@@ -1443,13 +1452,23 @@ fn handle_method(req: &JsonRpcRequest, state: Arc<State>, chain_id: u64) -> Json
         },
 
         "eth_sendRawTransaction" => {
-            let tx_hash = format!("0x{}", hex::encode(&rand::random::<[u8; 32]>()));
-            tracing::info!("eth_sendRawTransaction received: {}", tx_hash);
-            JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                result: Some(Value::String(tx_hash)),
-                error: None,
-                id: req.id.clone(),
+            let raw_tx = req.params.first().and_then(|v| v.as_str()).unwrap_or("");
+            match process_raw_transaction(raw_tx, &state, chain_id) {
+                Ok(hash) => JsonRpcResponse {
+                    jsonrpc: "2.0".to_string(),
+                    result: Some(Value::String(format!("0x{}", hex::encode(hash.as_bytes())))),
+                    error: None,
+                    id: req.id.clone(),
+                },
+                Err(e) => JsonRpcResponse {
+                    jsonrpc: "2.0".to_string(),
+                    result: None,
+                    error: Some(JsonRpcError {
+                        code: -32602,
+                        message: e,
+                    }),
+                    id: req.id.clone(),
+                },
             }
         },
 
@@ -1665,6 +1684,40 @@ fn parse_bytes32(s: &str) -> Result<[u8; 32], ()> {
     let mut arr = [0u8; 32];
     arr.copy_from_slice(&bytes);
     Ok(arr)
+}
+
+fn process_raw_transaction(raw_tx: &str, state: &State, chain_id: u64) -> Result<merklith_types::Hash, String> {
+    let raw = raw_tx.strip_prefix("0x").unwrap_or(raw_tx);
+    if raw.is_empty() {
+        return Err("Empty raw transaction".to_string());
+    }
+
+    let bytes = hex::decode(raw).map_err(|_| "Invalid raw transaction hex".to_string())?;
+    let signed_tx: merklith_types::SignedTransaction = borsh::from_slice(&bytes)
+        .map_err(|_| "Invalid raw transaction payload (expected borsh SignedTransaction)".to_string())?;
+
+    if signed_tx.tx.chain_id != chain_id {
+        return Err(format!(
+            "Invalid chain_id: expected {}, got {}",
+            chain_id, signed_tx.tx.chain_id
+        ));
+    }
+
+    let to = signed_tx.tx.to.ok_or_else(|| "Contract creation raw tx is not supported by RPC yet".to_string())?;
+    let from = signed_tx.sender();
+    let expected_nonce = state.nonce(&from);
+    if signed_tx.tx.nonce != expected_nonce {
+        return Err(format!(
+            "Invalid nonce: expected {}, got {}",
+            expected_nonce, signed_tx.tx.nonce
+        ));
+    }
+
+    let signing_hash = signed_tx.tx.signing_hash();
+    merklith_crypto::ed25519_verify(&signed_tx.public_key, signing_hash.as_bytes(), &signed_tx.signature)
+        .map_err(|e| format!("Invalid signature: {}", e))?;
+
+    state.transfer(&from, &to, signed_tx.tx.value)
 }
 
 fn execute_contract(code: &[u8], input: &[u8]) -> Result<Vec<u8>, String> {

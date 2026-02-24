@@ -31,3 +31,4 @@ anyhow.workspace = true
 hyper = { version = "0.14", features = ["server", "http1", "tcp"] }
 rand = "0.8"
 bytes = "1"
+borsh = { workspace = true }

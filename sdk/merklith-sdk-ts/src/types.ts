@@ -1,7 +1,6 @@
-export interface Address {
-  toString(): string;
-  toBytes(): Uint8Array;
-}
+export type Hex = `0x${string}`;
+export type Address = Hex;
+export type Hash = Hex;
 
 export interface Transaction {
   hash: string;

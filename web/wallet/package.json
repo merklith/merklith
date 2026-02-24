@@ -32,6 +32,10 @@
     "docker:build": "docker build -t merklith-wallet .",
     "docker:run": "docker run -p 3001:80 merklith-wallet"
   },
+  "overrides": {
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

@@ -1,7 +1,7 @@
 //! Wallet management for SDK.
 
 use merklith_crypto::ed25519::Keypair as Ed25519Keypair;
-use merklith_types::{Address, Transaction, SignedTransaction, U256};
+use merklith_types::{Address, Transaction, SignedTransaction};
 use crate::errors::{Result, SdkError};
 
 /// Wallet for signing transactions.
@@ -73,9 +73,7 @@ impl Wallet {
 
     /// Get private key bytes (careful!).
     pub fn private_key(&self) -> [u8; 32] {
-        // In real implementation, would return actual key
-        // This is a placeholder
-        [0u8; 32]
+        self.keypair.to_bytes()
     }
 
     /// Export to hex string.
@@ -102,7 +100,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Private key export not fully implemented"]
     fn test_wallet_from_hex() {
         let wallet = Wallet::new();
         let exported = wallet.export_hex();
