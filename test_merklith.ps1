@@ -16,14 +16,27 @@ $env:RUST_BACKTRACE = "0"
 # Test 1: Binary existence and version
 Write-Host "Test 1: Checking binaries..." -ForegroundColor Yellow
 $binaries = @("merklith", "merklith-node", "merklith-keygen", "merklith-monitor", "merklith-benchmark", "merklith-faucet")
+$missing = @()
 foreach ($bin in $binaries) {
     $path = "./target/release/$bin.exe"
     if (Test-Path $path) {
         $version = & $path --version 2>$null
         Write-Host "  [OK] $bin - $version" -ForegroundColor Green
     } else {
-        Write-Host "  [FAIL] $bin not found" -ForegroundColor Red
-        exit 1
+        $missing += $bin
+        Write-Host "  [WARN] $bin not found" -ForegroundColor Yellow
+    }
+}
+
+if ($missing.Count -gt 0) {
+    Write-Host "Building missing release binaries..." -ForegroundColor Yellow
+    cargo build --release --bins | Out-Null
+    foreach ($bin in $missing) {
+        $path = "./target/release/$bin.exe"
+        if (-not (Test-Path $path)) {
+            Write-Host "  [FAIL] $bin not found after build" -ForegroundColor Red
+            exit 1
+        }
     }
 }
 Write-Host ""

@@ -143,7 +143,7 @@ Storage Layer
 
 **Current Implementation**:
 - JSON-based storage (development)
-- RocksDB support (production-ready)
+- RocksDB backend exists but is not the default path yet
 - In-memory cache layer
 
 ### merklith-core
@@ -173,6 +173,7 @@ impl State {
 ### merklith-vm
 
 Byte-code virtual machine.
+Current status: the WASM runtime validates module shape and gas bounds, but full WASM execution is still pending engine integration.
 
 **Architecture**:
 ```
@@ -632,9 +633,9 @@ Sync speed: ~100 blocks/s
 ## Future Improvements
 
 ### Short Term (6 months)
-- [ ] RocksDB storage backend
+- [ ] Make RocksDB the default storage backend
 - [ ] Full P2P sync
-- [ ] WebAssembly VM
+- [ ] Full WebAssembly execution engine integration
 - [ ] Light client support
 
 ### Medium Term (1 year)

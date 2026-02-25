@@ -169,7 +169,7 @@ const Stats = () => {
         </InfoRow>
         <InfoRow>
           <InfoLabel>Network Latency</InfoLabel>
-          <InfoValue>< 50ms</InfoValue>
+          <InfoValue>{'< 50ms'}</InfoValue>
         </InfoRow>
         <InfoRow>
           <InfoLabel>Last Block</InfoLabel>

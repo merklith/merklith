@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   merklith-node-1:
-    image: debian:bookworm-slim
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: merklith-node:latest
     container_name: merklith-node-1
     hostname: merklith-node-1
     ports:
@@ -13,18 +16,17 @@ services:
     volumes:
       - node1-data:/data
       - ./config/devnet.toml:/config/node.toml:ro
-      - ./target/release/merklith-node:/usr/local/bin/merklith-node:ro
-      - ./target/release/merklith:/usr/local/bin/merklith:ro
     environment:
       - RUST_LOG=info
       - NODE_ID=1
     command: >
-      bash -c "
-        chmod +x /usr/local/bin/merklith-node /usr/local/bin/merklith &&
-        apt-get update && apt-get install -y libssl3 ca-certificates curl &&
-        rm -rf /var/lib/apt/lists/* &&
-        merklith-node --data-dir=/data --rpc-port=8545 --p2p-port=30303 --validator --chain-id=17001 --config=/config/node.toml
-      "
+      merklith-node 
+      --data-dir=/data 
+      --rpc-port=8545 
+      --p2p-port=30303 
+      --validator 
+      --chain-id=17001 
+      --config=/config/node.toml
     networks:
       - merklith-network
     healthcheck:
@@ -35,7 +37,7 @@ services:
       start_period: 40s
 
   merklith-node-2:
-    image: debian:bookworm-slim
+    image: merklith-node:latest
     container_name: merklith-node-2
     hostname: merklith-node-2
     ports:
@@ -46,31 +48,25 @@ services:
     volumes:
       - node2-data:/data
       - ./config/devnet.toml:/config/node.toml:ro
-      - ./target/release/merklith-node:/usr/local/bin/merklith-node:ro
-      - ./target/release/merklith:/usr/local/bin/merklith:ro
     environment:
       - RUST_LOG=info
       - NODE_ID=2
-    command: >
-      bash -c "
-        chmod +x /usr/local/bin/merklith-node /usr/local/bin/merklith &&
-        apt-get update && apt-get install -y libssl3 ca-certificates curl &&
-        rm -rf /var/lib/apt/lists/* &&
-        merklith-node --data-dir=/data --rpc-port=8545 --p2p-port=30303 --validator --chain-id=17001 --config=/config/node.toml
-      "
-    networks:
-      - merklith-network
     depends_on:
       - merklith-node-1
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8545"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    command: >
+      merklith-node 
+      --data-dir=/data 
+      --rpc-port=8545 
+      --p2p-port=30303 
+      --validator 
+      --chain-id=17001 
+      --config=/config/node.toml
+      --bootnodes=/dns4/merklith-node-1/tcp/30303
+    networks:
+      - merklith-network
 
   merklith-node-3:
-    image: debian:bookworm-slim
+    image: merklith-node:latest
     container_name: merklith-node-3
     hostname: merklith-node-3
     ports:
@@ -81,28 +77,22 @@ services:
     volumes:
       - node3-data:/data
       - ./config/devnet.toml:/config/node.toml:ro
-      - ./target/release/merklith-node:/usr/local/bin/merklith-node:ro
-      - ./target/release/merklith:/usr/local/bin/merklith:ro
     environment:
       - RUST_LOG=info
       - NODE_ID=3
-    command: >
-      bash -c "
-        chmod +x /usr/local/bin/merklith-node /usr/local/bin/merklith &&
-        apt-get update && apt-get install -y libssl3 ca-certificates curl &&
-        rm -rf /var/lib/apt/lists/* &&
-        merklith-node --data-dir=/data --rpc-port=8545 --p2p-port=30303 --validator --chain-id=17001 --config=/config/node.toml
-      "
-    networks:
-      - merklith-network
     depends_on:
       - merklith-node-1
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8545"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    command: >
+      merklith-node 
+      --data-dir=/data 
+      --rpc-port=8545 
+      --p2p-port=30303 
+      --validator 
+      --chain-id=17001 
+      --config=/config/node.toml
+      --bootnodes=/dns4/merklith-node-1/tcp/30303
+    networks:
+      - merklith-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -114,16 +104,8 @@ services:
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
     networks:
       - merklith-network
-    depends_on:
-      - merklith-node-1
-      - merklith-node-2
-      - merklith-node-3
 
   grafana:
     image: grafana/grafana:latest
@@ -152,6 +134,3 @@ volumes:
 networks:
   merklith-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

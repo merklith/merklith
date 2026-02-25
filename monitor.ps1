@@ -1,6 +1,7 @@
 # MERKLITH Node Monitoring Script
 param(
-    [int]$RefreshInterval = 5
+    [int]$RefreshInterval = 5,
+    [int[]]$RpcPorts = @(8545, 8547, 8549)
 )
 
 Write-Host "MERKLITH Node Monitor" -ForegroundColor Green
@@ -19,37 +20,24 @@ while ($true) {
     Write-Host "Running Nodes: $($processes.Count)" -ForegroundColor Yellow
     
     foreach ($proc in $processes) {
-        $port = switch ($proc.Id) {
-            176008 { "8545" }
-            53204  { "8547" }
-            92552  { "8549" }
-            default { "Unknown" }
-        }
-        Write-Host "  Node PID $($proc.Id) (Port: $port) - RAM: $([math]::Round($proc.WorkingSet64/1MB, 2)) MB" -ForegroundColor Green
+        $listeningPorts = @(Get-NetTCPConnection -State Listen -OwningProcess $proc.Id -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty LocalPort -Unique |
+            Sort-Object)
+        $portLabel = if ($listeningPorts.Count -gt 0) { ($listeningPorts -join ",") } else { "Unknown" }
+        Write-Host "  Node PID $($proc.Id) (Port: $portLabel) - RAM: $([math]::Round($proc.WorkingSet64/1MB, 2)) MB" -ForegroundColor Green
     }
     Write-Host ""
     
     # Get block numbers
     Write-Host "Block Numbers:" -ForegroundColor Yellow
-    try {
-        $response1 = Invoke-RestMethod -Uri "http://localhost:8545" -Method POST -ContentType "application/json" -Body '{"jsonrpc":"2.0","method":"merklith_blockNumber","params":[],"id":1}' -TimeoutSec 2
-        Write-Host "  Node 1 (8545): Block $($response1.result)" -ForegroundColor Green
-    } catch {
-        Write-Host "  Node 1 (8545): Offline" -ForegroundColor Red
-    }
-    
-    try {
-        $response2 = Invoke-RestMethod -Uri "http://localhost:8547" -Method POST -ContentType "application/json" -Body '{"jsonrpc":"2.0","method":"merklith_blockNumber","params":[],"id":1}' -TimeoutSec 2
-        Write-Host "  Node 2 (8547): Block $($response2.result)" -ForegroundColor Green
-    } catch {
-        Write-Host "  Node 2 (8547): Offline" -ForegroundColor Red
-    }
-    
-    try {
-        $response3 = Invoke-RestMethod -Uri "http://localhost:8549" -Method POST -ContentType "application/json" -Body '{"jsonrpc":"2.0","method":"merklith_blockNumber","params":[],"id":1}' -TimeoutSec 2
-        Write-Host "  Node 3 (8549): Block $($response3.result)" -ForegroundColor Green
-    } catch {
-        Write-Host "  Node 3 (8549): Offline" -ForegroundColor Red
+    for ($i = 0; $i -lt $RpcPorts.Count; $i++) {
+        $port = $RpcPorts[$i]
+        try {
+            $response = Invoke-RestMethod -Uri "http://localhost:$port" -Method POST -ContentType "application/json" -Body '{"jsonrpc":"2.0","method":"merklith_blockNumber","params":[],"id":1}' -TimeoutSec 2
+            Write-Host "  Node $($i + 1) ($port): Block $($response.result)" -ForegroundColor Green
+        } catch {
+            Write-Host "  Node $($i + 1) ($port): Offline" -ForegroundColor Red
+        }
     }
     
     Write-Host ""

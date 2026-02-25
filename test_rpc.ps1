@@ -13,6 +13,19 @@ Write-Host "MERKLITH Comprehensive RPC Test Suite" -ForegroundColor Cyan
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host ""
 
+function Ensure-ReleaseBinary {
+    param([string]$Name)
+    $path = "./target/release/$Name.exe"
+    if (Test-Path $path) { return }
+    Write-Host "Building missing binary: $Name" -ForegroundColor Yellow
+    cargo build --release --bin $Name | Out-Null
+    if (-not (Test-Path $path)) {
+        throw "Required binary not found after build: $path"
+    }
+}
+
+Ensure-ReleaseBinary -Name "merklith-node"
+
 # Start node
 Write-Host "Starting merklith-node..." -ForegroundColor Yellow
 $dataDir = "./data/rpc_test_$(Get-Random)"
